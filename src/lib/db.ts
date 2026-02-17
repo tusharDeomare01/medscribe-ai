@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/medscribe-ai";
+const MONGODB_URI = process.env.MONGODB_URI || "";
 
 interface CachedConnection {
   conn: typeof mongoose | null;
@@ -17,8 +17,18 @@ if (!globalWithMongoose.mongoose) {
   globalWithMongoose.mongoose = cached;
 }
 
-export async function connectDB() {
+/**
+ * Connects to MongoDB.
+ * Returns the mongoose instance on success, or `null` if MONGODB_URI is not
+ * configured or the connection fails — allowing the app to run in stateless
+ * (no-DB) mode on platforms like Vercel without a database.
+ */
+export async function connectDB(): Promise<typeof mongoose | null> {
   if (cached.conn) return cached.conn;
+
+  if (!MONGODB_URI) {
+    return null;
+  }
 
   if (!cached.promise) {
     cached.promise = mongoose.connect(MONGODB_URI, {
@@ -30,7 +40,8 @@ export async function connectDB() {
     cached.conn = await cached.promise;
   } catch (e) {
     cached.promise = null;
-    throw e;
+    console.warn("MongoDB connection failed, running in stateless mode:", e);
+    return null;
   }
 
   return cached.conn;
