@@ -1,0 +1,454 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── User ──────────────────────────────────────────────────────────
+
+model User {
+  id             String    @id @default(cuid())
+  name           String
+  email          String    @unique
+  password       String
+  role           String    @default("doctor")
+  specialization String?
+  avatar         String?
+  resetToken     String?
+  resetExpiry    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  patients         Patient[]
+  clinicalNotes    ClinicalNote[]
+  reports          Report[]
+  carePlans        CarePlan[]
+  educationContent EducationContent[]
+  doctorVisits     VisitSummary[]     @relation("DoctorVisits")
+
+  // Front-Office & Billing
+  doctorAppointments Appointment[]      @relation("DoctorAppointments")
+
+  // Nursing & Operations
+  nursingTasks      NursingTask[]       @relation("NursingTasks")
+  monitoringRecords PatientMonitoring[] @relation("MonitoringRecords")
+  shiftSchedules    ShiftSchedule[]     @relation("ShiftSchedules")
+  staffTrainings    StaffTraining[]     @relation("StaffTrainings")
+
+  @@map("users")
+}
+
+// ── Patient ───────────────────────────────────────────────────────
+
+model Patient {
+  id                 String    @id @default(cuid())
+  name               String
+  age                Int
+  gender             String
+  bloodGroup         String?
+  phone              String?
+  email              String?
+  address            String?
+  allergies          String[]  @default([])
+  currentMedications String[]  @default([])
+  emergencyContact   Json?
+  preferredLanguage  String    @default("en")
+  gamificationPoints Int       @default(0)
+  streakDays         Int       @default(0)
+  lastActiveAt       DateTime?
+
+  createdBy          String
+  createdByUser      User      @relation(fields: [createdBy], references: [id])
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  clinicalNotes    ClinicalNote[]
+  reports          Report[]
+  carePlans        CarePlan[]
+  triageSessions   TriageSession[]
+  educationContent EducationContent[]
+  achievements     Achievement[]
+  visitSummaries   VisitSummary[]
+
+  // Front-Office & Billing
+  appointments      Appointment[]
+  insuranceChecks   InsuranceCheck[]
+  billingRecords    BillingRecord[]
+
+  // Nursing
+  nursingTasks      NursingTask[]
+  monitoringRecords PatientMonitoring[]
+
+  @@map("patients")
+}
+
+// ── ClinicalNote ──────────────────────────────────────────────────
+
+model ClinicalNote {
+  id         String   @id @default(cuid())
+  noteType   String   @default("progress_note")
+  rawText    String
+  authorName String
+  entities   Json?
+  soapNote   Json?
+  icdCodes   Json?
+  status     String   @default("draft")
+
+  patientId  String?
+  patient    Patient? @relation(fields: [patientId], references: [id])
+
+  authorId   String
+  author     User     @relation(fields: [authorId], references: [id])
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  visitSummary        VisitSummary?
+  codingSuggestions   MedicalCoding[]
+
+  @@index([patientId, createdAt(sort: Desc)])
+  @@map("clinical_notes")
+}
+
+// ── Report ────────────────────────────────────────────────────────
+
+model Report {
+  id            String   @id @default(cuid())
+  fileName      String
+  fileType      String
+  fileData      String?
+  extractedData Json?
+  explanation   String?
+
+  patientId     String
+  patient       Patient  @relation(fields: [patientId], references: [id])
+
+  uploadedBy    String
+  uploader      User     @relation(fields: [uploadedBy], references: [id])
+
+  createdAt     DateTime @default(now())
+
+  @@index([patientId])
+  @@map("reports")
+}
+
+// ── CarePlan ─────────────────────────────────────────────────────
+
+model CarePlan {
+  id              String   @id @default(cuid())
+  title           String
+  condition       String
+  goals           Json
+  medications     Json
+  exercises       Json
+  dietPlan        Json?
+  wearableData    Json?
+  progressEntries Json?
+  aiGenerated     Boolean  @default(true)
+  status          String   @default("active")
+
+  patientId       String
+  patient         Patient  @relation(fields: [patientId], references: [id])
+
+  createdBy       String
+  creator         User     @relation(fields: [createdBy], references: [id])
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([patientId])
+  @@map("care_plans")
+}
+
+// ── TriageSession ────────────────────────────────────────────────
+
+model TriageSession {
+  id              String   @id @default(cuid())
+  symptoms        String[]
+  conversation    Json
+  severity        String?
+  recommendation  String?
+  triageResult    Json?
+
+  patientId       String?
+  patient         Patient? @relation(fields: [patientId], references: [id])
+
+  createdAt       DateTime @default(now())
+
+  @@index([patientId])
+  @@map("triage_sessions")
+}
+
+// ── EducationContent ─────────────────────────────────────────────
+
+model EducationContent {
+  id                String   @id @default(cuid())
+  condition         String
+  title             String
+  content           String
+  simplifiedContent String?
+  category          String
+  readTime          Int?
+
+  patientId         String?
+  patient           Patient? @relation(fields: [patientId], references: [id])
+
+  createdBy         String
+  creator           User     @relation(fields: [createdBy], references: [id])
+
+  createdAt         DateTime @default(now())
+
+  @@index([patientId])
+  @@map("education_content")
+}
+
+// ── Achievement ──────────────────────────────────────────────────
+
+model Achievement {
+  id          String   @id @default(cuid())
+  type        String
+  title       String
+  description String
+  icon        String
+  points      Int      @default(0)
+  earnedAt    DateTime @default(now())
+
+  patientId   String
+  patient     Patient  @relation(fields: [patientId], references: [id])
+
+  @@index([patientId])
+  @@map("achievements")
+}
+
+// ── VisitSummary ─────────────────────────────────────────────────
+
+model VisitSummary {
+  id               String    @id @default(cuid())
+  visitType        String
+  preScreening     Json?
+  summary          String?
+  careInstructions String?
+  followUpDate     DateTime?
+  status           String    @default("scheduled")
+
+  patientId        String
+  patient          Patient   @relation(fields: [patientId], references: [id])
+
+  doctorId         String
+  doctor           User      @relation("DoctorVisits", fields: [doctorId], references: [id])
+
+  clinicalNoteId   String?   @unique
+  clinicalNote     ClinicalNote? @relation(fields: [clinicalNoteId], references: [id])
+
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([patientId])
+  @@map("visit_summaries")
+}
+
+// ── Appointment ─────────────────────────────────────────────────
+
+model Appointment {
+  id           String    @id @default(cuid())
+  scheduledAt  DateTime
+  duration     Int       @default(30)
+  type         String    @default("in-person")
+  status       String    @default("scheduled")
+  noShowRisk   Float?
+  checkedInAt  DateTime?
+  checkedInVia String?
+  reason       String?
+  notes        String?
+
+  patientId    String
+  patient      Patient   @relation(fields: [patientId], references: [id])
+
+  doctorId     String
+  doctor       User      @relation("DoctorAppointments", fields: [doctorId], references: [id])
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([doctorId, scheduledAt])
+  @@index([patientId])
+  @@map("appointments")
+}
+
+// ── InsuranceCheck ──────────────────────────────────────────────
+
+model InsuranceCheck {
+  id                 String    @id @default(cuid())
+  providerName       String
+  policyNumber       String
+  groupNumber        String?
+  status             String    @default("pending")
+  verificationResult Json?
+  eligibleServices   Json?
+  copay              Float?
+  deductible         Float?
+  verifiedAt         DateTime?
+  verifiedBy         String?
+
+  patientId          String
+  patient            Patient   @relation(fields: [patientId], references: [id])
+
+  createdAt          DateTime  @default(now())
+
+  @@index([patientId])
+  @@map("insurance_checks")
+}
+
+// ── MedicalCoding ───────────────────────────────────────────────
+
+model MedicalCoding {
+  id             String   @id @default(cuid())
+  icdCodes       Json
+  cptCodes       Json
+  hcpcsCodes     Json?
+  modifiers      Json?
+  auditFlags     Json?
+  denialRisk     Float?
+  denialReasons  Json?
+  totalEstimated Float?
+  status         String   @default("suggested")
+  reviewedBy     String?
+
+  clinicalNoteId String
+  clinicalNote   ClinicalNote @relation(fields: [clinicalNoteId], references: [id])
+
+  createdAt      DateTime @default(now())
+
+  @@index([clinicalNoteId])
+  @@map("medical_coding")
+}
+
+// ── BillingRecord ───────────────────────────────────────────────
+
+model BillingRecord {
+  id             String   @id @default(cuid())
+  totalCharge    Float
+  insurancePaid  Float    @default(0)
+  patientOwes    Float    @default(0)
+  status         String   @default("pending")
+  claimNumber    String?
+  denialReason   String?
+  missedCodes    Json?
+
+  patientId      String
+  patient        Patient  @relation(fields: [patientId], references: [id])
+
+  clinicalNoteId String?
+  appointmentId  String?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([patientId])
+  @@map("billing_records")
+}
+
+// ── NursingTask ─────────────────────────────────────────────────
+
+model NursingTask {
+  id          String    @id @default(cuid())
+  type        String
+  title       String
+  description String?
+  status      String    @default("pending")
+  priority    String    @default("normal")
+  dueAt       DateTime?
+  completedAt DateTime?
+  voiceInput  String?
+  aiSummary   String?
+  vitals      Json?
+
+  patientId   String?
+  patient     Patient?  @relation(fields: [patientId], references: [id])
+
+  createdBy   String
+  creator     User      @relation("NursingTasks", fields: [createdBy], references: [id])
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([createdBy, status])
+  @@index([patientId, createdAt(sort: Desc)])
+  @@map("nursing_tasks")
+}
+
+// ── PatientMonitoring ───────────────────────────────────────────
+
+model PatientMonitoring {
+  id           String   @id @default(cuid())
+  heartRate    Float?
+  systolic     Float?
+  diastolic    Float?
+  temperature  Float?
+  spo2         Float?
+  respRate     Float?
+  painLevel    Int?
+  alertLevel   String?
+  alertMessage String?
+  aiAnalysis   String?
+
+  patientId    String
+  patient      Patient  @relation(fields: [patientId], references: [id])
+
+  recordedBy   String
+  recorder     User     @relation("MonitoringRecords", fields: [recordedBy], references: [id])
+
+  recordedAt   DateTime @default(now())
+
+  @@index([patientId, recordedAt(sort: Desc)])
+  @@map("patient_monitoring")
+}
+
+// ── ShiftSchedule ───────────────────────────────────────────────
+
+model ShiftSchedule {
+  id             String   @id @default(cuid())
+  shiftDate      DateTime
+  shiftType      String
+  department     String
+  assignedStaff  Json
+  predictedLoad  Json?
+  aiOptimization Json?
+  status         String   @default("draft")
+
+  createdBy      String
+  creator        User     @relation("ShiftSchedules", fields: [createdBy], references: [id])
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([shiftDate, department])
+  @@map("shift_schedules")
+}
+
+// ── StaffTraining ───────────────────────────────────────────────
+
+model StaffTraining {
+  id          String   @id @default(cuid())
+  title       String
+  topic       String
+  type        String
+  content     String
+  quiz        Json?
+  difficulty  String   @default("intermediate")
+  duration    Int?
+  department  String?
+  aiGenerated Boolean  @default(true)
+
+  createdBy   String
+  creator     User     @relation("StaffTrainings", fields: [createdBy], references: [id])
+
+  createdAt   DateTime @default(now())
+
+  @@index([topic, type])
+  @@map("staff_trainings")
+}

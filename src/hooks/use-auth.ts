@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 
 export interface AuthUser {
@@ -34,13 +34,16 @@ export function useAuth() {
     }
   }, [router]);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     router.push("/login");
-  };
+  }, [router]);
 
-  const getToken = () => localStorage.getItem("token") || "";
+  const getToken = useCallback(
+    () => localStorage.getItem("token") || "",
+    []
+  );
 
   return { user, loading, logout, getToken };
 }

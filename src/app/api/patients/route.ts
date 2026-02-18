@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connectDB } from "@/lib/db";
+import { prisma } from "@/lib/db";
 import { getAuthUser } from "@/lib/api-auth";
-import Patient from "@/models/Patient";
 
 export async function GET(req: NextRequest) {
   const user = getAuthUser(req);
@@ -10,18 +9,14 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const db = await connectDB();
-    if (!db) {
-      return NextResponse.json({ success: true, data: [] });
-    }
-
-    const patients = await Patient.find({ createdBy: user.id })
-      .sort({ createdAt: -1 })
-      .lean();
+    const patients = await prisma.patient.findMany({
+      where: { createdBy: user.id },
+      orderBy: { createdAt: "desc" },
+    });
 
     return NextResponse.json({ success: true, data: patients });
   } catch {
-    return NextResponse.json({ success: true, data: [] });
+    return NextResponse.json({ success: false, error: "Server error" }, { status: 500 });
   }
 }
 
@@ -32,24 +27,22 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const db = await connectDB();
     const body = await req.json();
 
-    if (!db) {
-      // Return a mock patient object so the UI works without a database
-      const mockPatient = {
-        _id: `patient-${Date.now()}`,
-        ...body,
+    const patient = await prisma.patient.create({
+      data: {
+        name: body.name,
+        age: body.age,
+        gender: body.gender,
+        bloodGroup: body.bloodGroup || null,
+        phone: body.phone || null,
+        email: body.email || null,
+        address: body.address || null,
+        allergies: body.allergies || [],
+        currentMedications: body.currentMedications || [],
+        emergencyContact: body.emergencyContact || null,
         createdBy: user.id,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      return NextResponse.json({ success: true, data: mockPatient }, { status: 201 });
-    }
-
-    const patient = await Patient.create({
-      ...body,
-      createdBy: user.id,
+      },
     });
 
     return NextResponse.json({ success: true, data: patient }, { status: 201 });

@@ -1,169 +1,231 @@
 "use client";
 
-import Link from "next/link";
+import { useState } from "react";
 import { usePathname } from "next/navigation";
-import {
-  LayoutDashboard,
-  Users,
-  FileText,
-  Upload,
-  MessageSquare,
-  BarChart3,
-  Stethoscope,
-  LogOut,
-  Moon,
-  Sun,
-  ChevronLeft,
-} from "lucide-react";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Separator } from "@/components/ui/separator";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/use-auth";
-import { useState } from "react";
+import {
+  Sidebar,
+  SidebarBody,
+  SidebarLink,
+} from "@/components/ui/aceternity-sidebar";
+import {
+  IconLayoutDashboard,
+  IconUsers,
+  IconFileText,
+  IconUpload,
+  IconMessageChatbot,
+  IconChartBar,
+  IconStethoscope,
+  IconLogout,
+  IconSun,
+  IconMoon,
+  IconHeartbeat,
+  IconClipboardHeart,
+  IconSchool,
+  IconVideo,
+  IconCalendarBolt,
+  IconPhoneCall,
+  IconShieldCheck,
+  IconFileBarcode,
+  IconReceipt,
+  IconNurse,
+  IconDeviceHeartMonitor,
+  IconCalendarStats,
+  IconCertificate,
+} from "@tabler/icons-react";
+import { motion } from "motion/react";
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/patients", label: "Patients", icon: Users },
-  { href: "/notes", label: "Clinical Notes", icon: FileText },
-  { href: "/reports", label: "Report Analysis", icon: Upload },
-  { href: "/ai-chat", label: "AI Assistant", icon: MessageSquare },
-  { href: "/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/dashboard", label: "Dashboard", icon: IconLayoutDashboard },
+  { href: "/patients", label: "Patients", icon: IconUsers },
+  { href: "/notes", label: "Clinical Notes", icon: IconFileText },
+  { href: "/reports", label: "Report Analysis", icon: IconUpload },
+  { href: "/ai-chat", label: "AI Assistant", icon: IconMessageChatbot },
+  { href: "/analytics", label: "Analytics", icon: IconChartBar },
+];
+
+const patientCareItems = [
+  { href: "/health-assistant", label: "Health Assistant", icon: IconHeartbeat },
+  { href: "/care-plans", label: "Care Plans", icon: IconClipboardHeart },
+  { href: "/education", label: "Education", icon: IconSchool },
+  { href: "/visits", label: "Visits", icon: IconVideo },
+];
+
+const frontOfficeItems = [
+  { href: "/scheduling", label: "Smart Scheduling", icon: IconCalendarBolt },
+  { href: "/call-routing", label: "Call Routing", icon: IconPhoneCall },
+  { href: "/insurance", label: "Insurance Check", icon: IconShieldCheck },
+];
+
+const billingItems = [
+  { href: "/medical-coding", label: "Medical Coding", icon: IconFileBarcode },
+  { href: "/billing", label: "Billing & Revenue", icon: IconReceipt },
+];
+
+const nursingItems = [
+  { href: "/nursing-assistant", label: "Nursing AI", icon: IconNurse },
+  { href: "/patient-monitoring", label: "Monitoring", icon: IconDeviceHeartMonitor },
+  { href: "/shift-scheduling", label: "Shift Scheduling", icon: IconCalendarStats },
+  { href: "/staff-training", label: "Staff Training", icon: IconCertificate },
 ];
 
 export function AppSidebar() {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const { user, logout } = useAuth();
-  const [collapsed, setCollapsed] = useState(false);
+  const [open, setOpen] = useState(false);
 
-  const initials = user?.name
-    ?.split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2) || "MS";
+  const initials =
+    user?.name
+      ?.split(" ")
+      .map((n: string) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2) || "MS";
+
+  const isActive = (href: string) =>
+    pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
+
+  const mapLinks = (items: typeof navItems) =>
+    items.map((item) => ({
+      label: item.label,
+      href: item.href,
+      icon: (
+        <item.icon
+          className={cn(
+            "h-5 w-5 shrink-0",
+            isActive(item.href)
+              ? "text-primary"
+              : "text-neutral-700 dark:text-neutral-200"
+          )}
+        />
+      ),
+    }));
+
+  const links = mapLinks(navItems);
+  const patientCareLinks = mapLinks(patientCareItems);
+  const frontOfficeLinks = mapLinks(frontOfficeItems);
+  const billingLinks = mapLinks(billingItems);
+  const nursingLinks = mapLinks(nursingItems);
+
+  const renderGroup = (label: string, groupLinks: ReturnType<typeof mapLinks>) => (
+    <div className="mt-4 flex flex-col gap-1">
+      <motion.div
+        animate={{
+          display: open ? "block" : "none",
+          opacity: open ? 1 : 0,
+        }}
+        className="px-3 mb-1"
+      >
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+          {label}
+        </span>
+      </motion.div>
+      {!open && <div className="h-px bg-border/50 mx-2 mb-1" />}
+      {groupLinks.map((link) => (
+        <SidebarLink
+          key={link.href}
+          link={link}
+          active={isActive(link.href)}
+        />
+      ))}
+    </div>
+  );
 
   return (
-    <TooltipProvider delayDuration={0}>
-      <aside
-        className={cn(
-          "fixed left-0 top-0 h-screen border-r border-sidebar-border bg-sidebar z-40 flex flex-col transition-all duration-300 ease-in-out",
-          collapsed ? "w-[68px]" : "w-[240px]"
-        )}
-      >
-        {/* Logo */}
-        <div className="h-16 flex items-center px-4 border-b border-sidebar-border">
-          <div className="flex items-center gap-2 overflow-hidden">
-            <div className="w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center shrink-0">
-              <Stethoscope className="w-5 h-5 text-sidebar-primary-foreground" />
+    <Sidebar open={open} setOpen={setOpen}>
+      <SidebarBody className="justify-between gap-10 border-r border-border/50 bg-background dark:bg-neutral-900">
+        {/* Top section */}
+        <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
+          {/* Logo */}
+          <div className={cn("flex items-center gap-2 py-1 transition-all duration-300", open ? "px-2" : "px-0 justify-center")}>
+            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shrink-0 shadow-sm shadow-primary/20">
+              <IconStethoscope className="w-5 h-5 text-primary-foreground" stroke={1.5} />
             </div>
-            {!collapsed && (
-              <span className="text-base font-bold text-sidebar-foreground whitespace-nowrap">
+            <motion.div
+              animate={{
+                display: open ? "flex" : "none",
+                opacity: open ? 1 : 0,
+              }}
+              className="flex flex-col whitespace-pre"
+            >
+              <span className="text-sm font-bold tracking-tight text-foreground leading-tight">
                 MedScribe AI
               </span>
-            )}
+              <span className="text-[10px] text-muted-foreground leading-tight">
+                Clinical Platform
+              </span>
+            </motion.div>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className={cn(
-              "ml-auto h-7 w-7 text-sidebar-foreground/60 hover:text-sidebar-foreground shrink-0",
-              collapsed && "ml-0 mt-2"
-            )}
-            onClick={() => setCollapsed(!collapsed)}
-          >
-            <ChevronLeft
-              className={cn("w-4 h-4 transition-transform", collapsed && "rotate-180")}
-            />
-          </Button>
+
+          {/* Nav links */}
+          <div className="mt-8 flex flex-col gap-1">
+            {links.map((link) => (
+              <SidebarLink
+                key={link.href}
+                link={link}
+                active={isActive(link.href)}
+              />
+            ))}
+          </div>
+
+          {renderGroup("Patient Care", patientCareLinks)}
+          {renderGroup("Front Office", frontOfficeLinks)}
+          {renderGroup("Coding & Billing", billingLinks)}
+          {renderGroup("Nursing & Ops", nursingLinks)}
         </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
-
-            const linkContent = (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
-                  isActive
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
-                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-                )}
-              >
-                <item.icon className={cn("w-5 h-5 shrink-0", isActive && "text-sidebar-primary")} />
-                {!collapsed && <span className="whitespace-nowrap">{item.label}</span>}
-              </Link>
-            );
-
-            if (collapsed) {
-              return (
-                <Tooltip key={item.href}>
-                  <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
-                  <TooltipContent side="right">{item.label}</TooltipContent>
-                </Tooltip>
-              );
-            }
-
-            return linkContent;
-          })}
-        </nav>
 
         {/* Bottom section */}
-        <div className="p-2 border-t border-sidebar-border space-y-1">
-          {/* Theme Toggle */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full justify-start gap-3 px-3 text-sidebar-foreground/70 hover:text-sidebar-foreground"
-                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              >
-                {theme === "dark" ? <Sun className="w-5 h-5 shrink-0" /> : <Moon className="w-5 h-5 shrink-0" />}
-                {!collapsed && <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>}
-              </Button>
-            </TooltipTrigger>
-            {collapsed && <TooltipContent side="right">Toggle Theme</TooltipContent>}
-          </Tooltip>
+        <div className="flex flex-col gap-1">
+          {/* Theme toggle */}
+          <SidebarLink
+            link={{
+              label: theme === "dark" ? "Light Mode" : "Dark Mode",
+              href: "#",
+              icon:
+                theme === "dark" ? (
+                  <IconSun className="h-5 w-5 shrink-0 text-neutral-700 dark:text-neutral-200" />
+                ) : (
+                  <IconMoon className="h-5 w-5 shrink-0 text-neutral-700 dark:text-neutral-200" />
+                ),
+            }}
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          />
 
-          <Separator className="bg-sidebar-border" />
+          {/* Logout */}
+          <SidebarLink
+            link={{
+              label: "Logout",
+              href: "#",
+              icon: (
+                <IconLogout className="h-5 w-5 shrink-0 text-neutral-700 dark:text-neutral-200" />
+              ),
+            }}
+            onClick={logout}
+          />
 
-          {/* User Info */}
-          <div className={cn("flex items-center gap-3 px-3 py-2", collapsed && "justify-center px-0")}>
-            <Avatar className="h-8 w-8 shrink-0">
-              <AvatarFallback className="bg-sidebar-primary/20 text-sidebar-primary text-xs font-bold">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-            {!collapsed && (
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-sidebar-foreground truncate">{user?.name}</p>
-                <p className="text-xs text-sidebar-foreground/50 truncate capitalize">{user?.role}</p>
-              </div>
-            )}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 text-sidebar-foreground/50 hover:text-destructive shrink-0"
-                  onClick={logout}
-                >
-                  <LogOut className="w-4 h-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right">Logout</TooltipContent>
-            </Tooltip>
-          </div>
+          {/* Divider */}
+          <div className="h-px bg-border/50 mx-1 my-1" />
+
+          {/* User info → Profile */}
+          <SidebarLink
+            link={{
+              label: user?.name || "User",
+              href: "/profile",
+              icon: (
+                <div className="h-7 w-7 shrink-0 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
+                  <span className="text-[10px] font-bold text-primary">
+                    {initials}
+                  </span>
+                </div>
+              ),
+            }}
+            active={isActive("/profile")}
+          />
         </div>
-      </aside>
-    </TooltipProvider>
+      </SidebarBody>
+    </Sidebar>
   );
 }

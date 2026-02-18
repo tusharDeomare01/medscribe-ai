@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connectDB } from "@/lib/db";
+import { prisma } from "@/lib/db";
 import { getAuthUser } from "@/lib/api-auth";
-import Patient from "@/models/Patient";
-import ClinicalNote from "@/models/ClinicalNote";
-import Report from "@/models/Report";
 
 export async function GET(req: NextRequest) {
   const user = getAuthUser(req);
@@ -12,25 +9,10 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const db = await connectDB();
-
-    if (!db) {
-      // Return zero counts when no database is available
-      return NextResponse.json({
-        success: true,
-        data: {
-          patients: 0,
-          notes: 0,
-          reports: 0,
-          analyses: 0,
-        },
-      });
-    }
-
     const [patients, notes, reports] = await Promise.all([
-      Patient.countDocuments({ createdBy: user.id }),
-      ClinicalNote.countDocuments({ authorId: user.id }),
-      Report.countDocuments({ uploadedBy: user.id }),
+      prisma.patient.count({ where: { createdBy: user.id } }),
+      prisma.clinicalNote.count({ where: { authorId: user.id } }),
+      prisma.report.count({ where: { uploadedBy: user.id } }),
     ]);
 
     return NextResponse.json({
@@ -43,14 +25,6 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch {
-    return NextResponse.json({
-      success: true,
-      data: {
-        patients: 0,
-        notes: 0,
-        reports: 0,
-        analyses: 0,
-      },
-    });
+    return NextResponse.json({ success: false, error: "Server error" }, { status: 500 });
   }
 }
