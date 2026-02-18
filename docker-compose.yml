@@ -1,0 +1,41 @@
+services:
+  # ── PostgreSQL ──────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-medscribe}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-medscribe_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-medscribe_ai}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-medscribe} -d ${POSTGRES_DB:-medscribe_ai}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ── MedScribe AI (Next.js) ─────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-medscribe}:${POSTGRES_PASSWORD:-medscribe_secret}@db:5432/${POSTGRES_DB:-medscribe_ai}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      JWT_SECRET: ${JWT_SECRET:-medscribe-ai-super-secret-key-2026}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      NODE_ENV: production
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
