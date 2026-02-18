@@ -1,16 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { connectDB } from "@/lib/db";
+import { prisma } from "@/lib/db";
 import { signToken } from "@/lib/auth";
-import User from "@/models/User";
-
-// Shared in-memory store with login route (persists per serverless cold start)
-const globalWithUsers = global as typeof globalThis & {
-  __registeredUsers?: Map<string, { name: string; email: string; password: string; role: string; specialization?: string }>;
-};
-if (!globalWithUsers.__registeredUsers) {
-  globalWithUsers.__registeredUsers = new Map();
-}
 
 export async function POST(req: NextRequest) {
   try {
@@ -25,61 +16,8 @@ export async function POST(req: NextRequest) {
 
     const emailLower = email.toLowerCase();
 
-    // ── Try MongoDB first ──
-    const db = await connectDB();
-
-    if (db) {
-      const existing = await User.findOne({ email: emailLower });
-      if (existing) {
-        return NextResponse.json(
-          { success: false, error: "Email already registered" },
-          { status: 400 }
-        );
-      }
-
-      const hashedPassword = await bcrypt.hash(password, 12);
-
-      const user = await User.create({
-        name,
-        email: emailLower,
-        password: hashedPassword,
-        role: role || "doctor",
-        specialization,
-      });
-
-      const token = signToken({
-        id: user._id.toString(),
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        specialization: user.specialization,
-      });
-
-      return NextResponse.json({
-        success: true,
-        token,
-        user: {
-          id: user._id.toString(),
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          specialization: user.specialization,
-        },
-      });
-    }
-
-    // ── Stateless fallback (no database) ──
-
-    // Check if email already registered in memory
-    if (globalWithUsers.__registeredUsers!.has(emailLower)) {
-      return NextResponse.json(
-        { success: false, error: "Email already registered" },
-        { status: 400 }
-      );
-    }
-
-    // Block registering with the demo email
-    if (emailLower === "doctor@medscribe.ai") {
+    const existing = await prisma.user.findUnique({ where: { email: emailLower } });
+    if (existing) {
       return NextResponse.json(
         { success: false, error: "Email already registered" },
         { status: 400 }
@@ -87,31 +25,35 @@ export async function POST(req: NextRequest) {
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
-    const userRole = role || "doctor";
 
-    // Store in memory
-    globalWithUsers.__registeredUsers!.set(emailLower, {
-      name,
-      email: emailLower,
-      password: hashedPassword,
-      role: userRole,
-      specialization,
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email: emailLower,
+        password: hashedPassword,
+        role: role || "doctor",
+        specialization: specialization || null,
+      },
     });
 
-    const userData = {
-      id: `user-${emailLower.replace(/[^a-z0-9]/g, "-")}`,
-      name,
-      email: emailLower,
-      role: userRole as "doctor" | "patient" | "admin",
-      specialization,
-    };
-
-    const token = signToken(userData);
+    const token = signToken({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role as "doctor" | "patient" | "admin",
+      specialization: user.specialization ?? undefined,
+    });
 
     return NextResponse.json({
       success: true,
       token,
-      user: userData,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        specialization: user.specialization,
+      },
     });
   } catch (error: unknown) {
     console.error("Register error:", error);

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connectDB } from "@/lib/db";
+import { prisma } from "@/lib/db";
 import { getAuthUser } from "@/lib/api-auth";
-import ClinicalNote from "@/models/ClinicalNote";
 
 export async function GET(req: NextRequest) {
   const user = getAuthUser(req);
@@ -10,25 +9,25 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const db = await connectDB();
-    if (!db) {
-      return NextResponse.json({ success: true, data: [] });
-    }
-
     const { searchParams } = new URL(req.url);
     const patientId = searchParams.get("patientId");
 
-    const filter: Record<string, unknown> = { authorId: user.id };
-    if (patientId) filter.patientId = patientId;
-
-    const notes = await ClinicalNote.find(filter)
-      .sort({ createdAt: -1 })
-      .populate("patientId", "name age gender")
-      .lean();
+    const notes = await prisma.clinicalNote.findMany({
+      where: {
+        authorId: user.id,
+        ...(patientId ? { patientId } : {}),
+      },
+      orderBy: { createdAt: "desc" },
+      include: {
+        patient: {
+          select: { name: true, age: true, gender: true },
+        },
+      },
+    });
 
     return NextResponse.json({ success: true, data: notes });
   } catch {
-    return NextResponse.json({ success: true, data: [] });
+    return NextResponse.json({ success: false, error: "Server error" }, { status: 500 });
   }
 }
 
@@ -39,26 +38,20 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const db = await connectDB();
     const body = await req.json();
 
-    if (!db) {
-      // Return a mock note so the UI works without a database
-      const mockNote = {
-        _id: `note-${Date.now()}`,
-        ...body,
-        authorId: user.id,
+    const note = await prisma.clinicalNote.create({
+      data: {
+        noteType: body.noteType || "progress_note",
+        rawText: body.rawText,
         authorName: user.name,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      return NextResponse.json({ success: true, data: mockNote }, { status: 201 });
-    }
-
-    const note = await ClinicalNote.create({
-      ...body,
-      authorId: user.id,
-      authorName: user.name,
+        entities: body.entities || null,
+        soapNote: body.soapNote || null,
+        icdCodes: body.icdCodes || null,
+        status: body.status || "draft",
+        patientId: body.patientId || null,
+        authorId: user.id,
+      },
     });
 
     return NextResponse.json({ success: true, data: note }, { status: 201 });

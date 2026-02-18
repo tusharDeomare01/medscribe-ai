@@ -60,7 +60,50 @@ export default function AuthPage({ initialMode }: AuthPageProps) {
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [regLoading, setRegLoading] = useState(false);
 
+  // Forgot password state
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [showForgot, setShowForgot] = useState(false);
+
   const isLogin = mode === "login";
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!forgotEmail) {
+      toast.error("Please enter your email address");
+      return;
+    }
+    setForgotLoading(true);
+
+    try {
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: forgotEmail }),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        if (data.resetUrl) {
+          // Demo mode — open the reset link directly
+          toast.success("Reset link generated! Redirecting...", { duration: 2000 });
+          setTimeout(() => {
+            window.location.href = data.resetUrl;
+          }, 1000);
+        } else {
+          toast.success("If that email is registered, a reset link has been sent.");
+        }
+        setShowForgot(false);
+        setForgotEmail("");
+      } else {
+        toast.error(data.error || "Something went wrong");
+      }
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setForgotLoading(false);
+    }
+  };
 
   // Initial entrance animation
   useEffect(() => {
@@ -219,7 +262,10 @@ export default function AuthPage({ initialMode }: AuthPageProps) {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="m-login-pw" className="text-sm font-medium text-foreground/80">Password</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="m-login-pw" className="text-sm font-medium text-foreground/80">Password</Label>
+                    <button type="button" onClick={() => { setShowForgot(true); setForgotEmail(loginEmail); }} className="text-xs text-primary hover:underline font-medium">Forgot password?</button>
+                  </div>
                   <div className="relative group">
                     <Lock className={inputIcon} />
                     <Input id="m-login-pw" type={showLoginPassword ? "text" : "password"} placeholder="Enter your password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} className={inputWithIconBoth} />
@@ -361,7 +407,10 @@ export default function AuthPage({ initialMode }: AuthPageProps) {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="d-login-pw" className="text-[13px] font-medium text-foreground/80">Password</Label>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="d-login-pw" className="text-[13px] font-medium text-foreground/80">Password</Label>
+                      <button type="button" onClick={() => { setShowForgot(true); setForgotEmail(loginEmail); }} className="text-xs text-primary hover:underline font-medium">Forgot password?</button>
+                    </div>
                     <div className="relative group">
                       <Lock className={inputIcon} />
                       <Input
@@ -568,6 +617,61 @@ export default function AuthPage({ initialMode }: AuthPageProps) {
           </div>
         </div>
       </div>
+
+      {/* ===== FORGOT PASSWORD MODAL ===== */}
+      {showForgot && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowForgot(false)} />
+          <div className="relative w-full max-w-md rounded-2xl border border-border/40 bg-card shadow-2xl shadow-black/30 p-6 sm:p-8 space-y-5">
+            <div className="space-y-1.5">
+              <h2 className="text-xl font-bold text-foreground tracking-tight">Forgot your password?</h2>
+              <p className="text-sm text-muted-foreground">
+                Enter your email and we&apos;ll generate a reset link for you.
+              </p>
+            </div>
+
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="forgot-email" className="text-sm font-medium text-foreground/80">Email</Label>
+                <div className="relative group">
+                  <Mail className={inputIcon} />
+                  <Input
+                    id="forgot-email"
+                    type="email"
+                    placeholder="doctor@hospital.com"
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                    className={inputWithIconLeft}
+                    autoFocus
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1 h-11"
+                  onClick={() => setShowForgot(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  className="flex-1 h-11 gap-2"
+                  disabled={forgotLoading}
+                >
+                  {forgotLoading ? (
+                    <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                  ) : (
+                    <>Send Reset Link <ArrowRight className="w-4 h-4" /></>
+                  )}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

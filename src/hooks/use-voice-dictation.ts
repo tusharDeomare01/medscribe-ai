@@ -12,6 +12,13 @@ type SpeechRecognitionResultType = any;
 
 /* ── Types ───────────────────────────────────────────────────────── */
 
+export interface WordSegment {
+  word: string;
+  confidence: number;
+  isFinal: boolean;
+  timestamp: number;
+}
+
 interface VoiceDictationOptions {
   /** Language / locale — default "en-US" */
   lang?: string;
@@ -21,12 +28,18 @@ interface VoiceDictationOptions {
   autoRestart?: boolean;
   /** Max consecutive restart attempts before giving up — default 5 */
   maxRestarts?: number;
+  /** Enable medical terminology correction — default false */
+  medicalMode?: boolean;
+  /** Minimum confidence threshold (0-1) — default 0.0 (accept all) */
+  confidenceThreshold?: number;
   /** Callback fired every time new text is produced */
   onTranscript?: (text: string) => void;
   /** Callback fired on final (committed) transcript chunk */
-  onFinalChunk?: (chunk: string) => void;
+  onFinalChunk?: (chunk: string, confidence: number) => void;
   /** Callback when an error occurs */
   onError?: (error: string) => void;
+  /** Callback for real-time word segments */
+  onWordSegment?: (segment: WordSegment) => void;
 }
 
 interface VoiceDictationReturn {
@@ -34,12 +47,22 @@ interface VoiceDictationReturn {
   isListening: boolean;
   /** The live transcript (final + interim combined) */
   liveTranscript: string;
+  /** Only the interim (unconfirmed) portion of current speech */
+  interimText: string;
+  /** Only the final (confirmed) text so far */
+  finalText: string;
   /** Elapsed seconds since recording started */
   elapsed: number;
   /** Rough volume level 0–1 (from AudioContext analyser) */
   volume: number;
   /** Whether the browser supports Web Speech API */
   isSupported: boolean;
+  /** Average confidence of all final results (0-1) */
+  avgConfidence: number;
+  /** Word segments with individual confidence */
+  wordSegments: WordSegment[];
+  /** Total word count of finalized text */
+  wordCount: number;
   /** Start recording. Pass existing text to prepend. */
   start: (existingText?: string) => void;
   /** Stop recording and return the final combined text */
@@ -48,9 +71,9 @@ interface VoiceDictationReturn {
 
 /* ── Best-alternative picker ─────────────────────────────────────── */
 
-function pickBestAlternative(result: SpeechRecognitionResultType): string {
+function pickBestAlternative(result: SpeechRecognitionResultType): { text: string; confidence: number } {
   let best = result[0].transcript;
-  let bestConf = result[0].confidence || 0;
+  let bestConf: number = result[0].confidence || 0;
 
   for (let a = 1; a < result.length; a++) {
     const alt = result[a];
@@ -59,12 +82,12 @@ function pickBestAlternative(result: SpeechRecognitionResultType): string {
       best = alt.transcript;
     }
   }
-  return best;
+  return { text: best, confidence: bestConf };
 }
 
 /* ── Auto-punctuation heuristic ──────────────────────────────────── */
 
-const SENTENCE_END_WORDS = /\b(period|full stop|comma|question mark|exclamation mark|new line|new paragraph)\b/gi;
+const SENTENCE_END_WORDS = /\b(period|full stop|comma|question mark|exclamation mark|new line|new paragraph|colon|semicolon|open parenthesis|close parenthesis|dash|hyphen)\b/gi;
 const PUNCTUATION_MAP: Record<string, string> = {
   period: ".",
   "full stop": ".",
@@ -73,11 +96,120 @@ const PUNCTUATION_MAP: Record<string, string> = {
   "exclamation mark": "!",
   "new line": "\n",
   "new paragraph": "\n\n",
+  colon: ":",
+  semicolon: ";",
+  "open parenthesis": "(",
+  "close parenthesis": ")",
+  dash: "—",
+  hyphen: "-",
 };
 
 function applyVoicePunctuation(text: string): string {
   return text.replace(SENTENCE_END_WORDS, (match) => {
     return PUNCTUATION_MAP[match.toLowerCase()] || match;
+  });
+}
+
+/* ── Medical terminology correction ──────────────────────────────── */
+
+const MEDICAL_CORRECTIONS: Record<string, string> = {
+  // Common misrecognitions of drug names
+  "aspirine": "Aspirin",
+  "asprin": "Aspirin",
+  "metropolol": "Metoprolol",
+  "metoperal": "Metoprolol",
+  "lisinopril": "Lisinopril",
+  "amlodipine": "Amlodipine",
+  "omeprazol": "Omeprazole",
+  "atorvastatin": "Atorvastatin",
+  "amoxicillin": "Amoxicillin",
+  "metformin": "Metformin",
+  "gabapenten": "Gabapentin",
+  "losartan": "Losartan",
+  "hydrochlorothiazide": "Hydrochlorothiazide",
+  "prednisone": "Prednisone",
+  "warfarin": "Warfarin",
+  "cloppidogrel": "Clopidogrel",
+  "clopidogrel": "Clopidogrel",
+
+  // Common medical abbreviations misheard
+  "st elevation": "ST elevation",
+  "st depression": "ST depression",
+  "troponin": "Troponin",
+  "tropinine": "Troponin",
+  "hemoglobin": "Hemoglobin",
+  "haemoglobin": "Hemoglobin",
+  "hematocrit": "Hematocrit",
+  "creatinine": "Creatinine",
+  "creatinin": "Creatinine",
+  "bilirubin": "Bilirubin",
+  "billiruben": "Bilirubin",
+
+  // Common conditions
+  "myocardial infarction": "Myocardial Infarction",
+  "mi": "MI",
+  "hypertension": "Hypertension",
+  "diabetes mellitus": "Diabetes Mellitus",
+  "atrial fibrillation": "Atrial Fibrillation",
+  "a fib": "AFib",
+  "afib": "AFib",
+  "pneumonia": "Pneumonia",
+  "copd": "COPD",
+  "congestive heart failure": "Congestive Heart Failure",
+  "chf": "CHF",
+  "dvt": "DVT",
+  "pulmonary embolism": "Pulmonary Embolism",
+  "pe": "PE",
+
+  // Vitals & measurements
+  "millimeters of mercury": "mmHg",
+  "milligrams": "mg",
+  "micrograms": "mcg",
+  "milliliters": "mL",
+  "milligrams per deciliter": "mg/dL",
+  "nanograms per ml": "ng/mL",
+  "beats per minute": "bpm",
+  "breaths per minute": "breaths/min",
+  "degrees fahrenheit": "°F",
+  "degrees celsius": "°C",
+
+  // Common medical terms
+  "ecg": "ECG",
+  "ekg": "EKG",
+  "cbc": "CBC",
+  "bmp": "BMP",
+  "cmp": "CMP",
+  "ct scan": "CT scan",
+  "mri": "MRI",
+  "bmi": "BMI",
+  "icd": "ICD",
+  "cpt": "CPT",
+  "soap": "SOAP",
+  "prn": "PRN",
+  "bid": "BID",
+  "tid": "TID",
+  "qid": "QID",
+  "po": "PO",
+  "iv": "IV",
+  "im": "IM",
+  "sub q": "SubQ",
+  "sublingual": "Sublingual",
+};
+
+function applyMedicalCorrections(text: string): string {
+  let corrected = text;
+  for (const [wrong, right] of Object.entries(MEDICAL_CORRECTIONS)) {
+    const regex = new RegExp(`\\b${wrong}\\b`, "gi");
+    corrected = corrected.replace(regex, right);
+  }
+  return corrected;
+}
+
+/* ── Capitalize sentence starts ──────────────────────────────────── */
+
+function capitalizeSentences(text: string): string {
+  return text.replace(/(^|[.!?\n]\s*)([a-z])/g, (_match, prefix, letter) => {
+    return prefix + letter.toUpperCase();
   });
 }
 
@@ -91,15 +223,23 @@ export function useVoiceDictation(
     maxAlternatives = 3,
     autoRestart = true,
     maxRestarts = 5,
+    medicalMode = false,
+    confidenceThreshold = 0.0,
     onTranscript,
     onFinalChunk,
     onError,
+    onWordSegment,
   } = options;
 
   const [isListening, setIsListening] = useState(false);
   const [liveTranscript, setLiveTranscript] = useState("");
+  const [interimText, setInterimText] = useState("");
+  const [finalText, setFinalText] = useState("");
   const [elapsed, setElapsed] = useState(0);
   const [volume, setVolume] = useState(0);
+  const [avgConfidence, setAvgConfidence] = useState(0);
+  const [wordSegments, setWordSegments] = useState<WordSegment[]>([]);
+  const [wordCount, setWordCount] = useState(0);
 
   // Refs to survive re-renders
   const recognitionRef = useRef<SpeechRecognitionType | null>(null);
@@ -108,6 +248,8 @@ export function useVoiceDictation(
   const restartCountRef = useRef(0);
   const intentionalStopRef = useRef(false);
   const elapsedTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const confidenceSumRef = useRef(0);
+  const confidenceCountRef = useRef(0);
 
   // Audio analyser for volume meter
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -119,9 +261,11 @@ export function useVoiceDictation(
   const onTranscriptRef = useRef(onTranscript);
   const onFinalChunkRef = useRef(onFinalChunk);
   const onErrorRef = useRef(onError);
+  const onWordSegmentRef = useRef(onWordSegment);
   useEffect(() => { onTranscriptRef.current = onTranscript; }, [onTranscript]);
   useEffect(() => { onFinalChunkRef.current = onFinalChunk; }, [onFinalChunk]);
   useEffect(() => { onErrorRef.current = onError; }, [onError]);
+  useEffect(() => { onWordSegmentRef.current = onWordSegment; }, [onWordSegment]);
 
   /* eslint-disable @typescript-eslint/no-explicit-any */
   const SpeechRecognitionApi =
@@ -131,6 +275,16 @@ export function useVoiceDictation(
   /* eslint-enable @typescript-eslint/no-explicit-any */
 
   const isSupported = !!SpeechRecognitionApi;
+
+  /* ── Post-process text ── */
+  const postProcess = useCallback((text: string): string => {
+    let result = applyVoicePunctuation(text);
+    if (medicalMode) {
+      result = applyMedicalCorrections(result);
+    }
+    result = capitalizeSentences(result);
+    return result;
+  }, [medicalMode]);
 
   /* ── Volume analyser loop ── */
   const startVolumeAnalyser = useCallback(async () => {
@@ -143,6 +297,7 @@ export function useVoiceDictation(
 
       const analyser = ctx.createAnalyser();
       analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.8;
       analyserRef.current = analyser;
 
       const source = ctx.createMediaStreamSource(stream);
@@ -152,7 +307,6 @@ export function useVoiceDictation(
 
       const tick = () => {
         analyser.getByteFrequencyData(dataArray);
-        // Average of frequency bins → normalised 0-1
         const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
         setVolume(Math.min(avg / 128, 1));
         rafRef.current = requestAnimationFrame(tick);
@@ -196,6 +350,14 @@ export function useVoiceDictation(
       finalChunksRef.current = "";
       restartCountRef.current = 0;
       intentionalStopRef.current = false;
+      confidenceSumRef.current = 0;
+      confidenceCountRef.current = 0;
+
+      setInterimText("");
+      setFinalText(existingText);
+      setWordSegments([]);
+      setWordCount(existingText ? existingText.trim().split(/\s+/).length : 0);
+      setAvgConfidence(0);
 
       const recognition: SpeechRecognitionType = new SpeechRecognitionApi();
       recognition.continuous = true;
@@ -211,20 +373,69 @@ export function useVoiceDictation(
 
         for (let i = 0; i < event.results.length; i++) {
           const result = event.results[i];
-          const best = pickBestAlternative(result);
+          const { text: best, confidence } = pickBestAlternative(result);
 
           if (result.isFinal) {
-            const punctuated = applyVoicePunctuation(best);
+            // Skip low-confidence results if threshold is set
+            if (confidence > 0 && confidence < confidenceThreshold) {
+              continue;
+            }
+
+            const punctuated = postProcess(best);
             finalAccumulated += punctuated;
+
+            // Track confidence
+            if (confidence > 0) {
+              confidenceSumRef.current += confidence;
+              confidenceCountRef.current++;
+              setAvgConfidence(
+                confidenceSumRef.current / confidenceCountRef.current
+              );
+            }
+
+            // Emit word segments
+            const words = punctuated.trim().split(/\s+/);
+            const now = Date.now();
+            words.forEach((word) => {
+              if (word) {
+                const segment: WordSegment = {
+                  word,
+                  confidence,
+                  isFinal: true,
+                  timestamp: now,
+                };
+                setWordSegments((prev) => [...prev, segment]);
+                onWordSegmentRef.current?.(segment);
+              }
+            });
           } else {
             interimAccumulated += best;
+
+            // Emit interim word segments
+            const words = best.trim().split(/\s+/);
+            const now = Date.now();
+            words.forEach((word) => {
+              if (word) {
+                onWordSegmentRef.current?.({
+                  word,
+                  confidence,
+                  isFinal: false,
+                  timestamp: now,
+                });
+              }
+            });
           }
         }
 
         // Track final chunks for the stop() return value
         if (finalAccumulated && finalAccumulated !== finalChunksRef.current) {
           const newChunk = finalAccumulated.slice(finalChunksRef.current.length);
-          if (newChunk.trim()) onFinalChunkRef.current?.(newChunk);
+          if (newChunk.trim()) {
+            const avgConf = confidenceCountRef.current > 0
+              ? confidenceSumRef.current / confidenceCountRef.current
+              : 0;
+            onFinalChunkRef.current?.(newChunk, avgConf);
+          }
         }
         finalChunksRef.current = finalAccumulated;
 
@@ -234,6 +445,9 @@ export function useVoiceDictation(
         const fullText = base + sep + finalAccumulated + (interimAccumulated ? interimAccumulated : "");
 
         setLiveTranscript(fullText);
+        setInterimText(interimAccumulated);
+        setFinalText(base + (base && finalAccumulated ? " " : "") + finalAccumulated);
+        setWordCount(fullText.trim() ? fullText.trim().split(/\s+/).length : 0);
         onTranscriptRef.current?.(fullText);
       };
 
@@ -258,7 +472,6 @@ export function useVoiceDictation(
 
         // Transient errors — let onend handle restart
         if (err === "network" || err === "aborted" || err === "no-speech") {
-          // no-speech is common during pauses — silently allow restart
           if (err !== "no-speech") {
             onErrorRef.current?.(`Speech recognition error: ${err}. Attempting to reconnect...`);
           }
@@ -297,7 +510,7 @@ export function useVoiceDictation(
       // Start volume analyser (non-blocking, best-effort)
       startVolumeAnalyser();
     },
-    [SpeechRecognitionApi, lang, maxAlternatives, autoRestart, maxRestarts, startVolumeAnalyser, stopVolumeAnalyser]
+    [SpeechRecognitionApi, lang, maxAlternatives, autoRestart, maxRestarts, confidenceThreshold, postProcess, startVolumeAnalyser, stopVolumeAnalyser]
   );
 
   /* ── Stop ── */
@@ -342,9 +555,14 @@ export function useVoiceDictation(
   return {
     isListening,
     liveTranscript,
+    interimText,
+    finalText,
     elapsed,
     volume,
     isSupported,
+    avgConfidence,
+    wordSegments,
+    wordCount,
     start,
     stop,
   };
