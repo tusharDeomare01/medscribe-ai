@@ -85,7 +85,7 @@ export default function AnalyticsPage() {
       </AnimatedContent>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div data-tour-id="analytics-stats" className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map((stat, i) => (
           <AnimatedContent key={stat.label} distance={40} delay={i * 0.1} duration={0.6}>
             <SpotlightCard
@@ -121,7 +121,7 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Charts */}
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div data-tour-id="analytics-charts" className="grid lg:grid-cols-2 gap-6">
         {/* Monthly Trend */}
         <AnimatedContent distance={40} delay={0.2} duration={0.6}>
           <Card className="border-border/50 bg-card/80 backdrop-blur-sm">

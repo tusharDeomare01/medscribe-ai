@@ -16,6 +16,7 @@ export function FloatingChatButton() {
         <Tooltip open={isOpen ? false : undefined}>
           <TooltipTrigger asChild>
             <motion.button
+              data-tour-id="chat-button"
               className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-xl shadow-primary/25 flex items-center justify-center hover:shadow-primary/40 hover:scale-105 transition-shadow md:bottom-6"
               onClick={() => setIsOpen(!isOpen)}
               whileTap={{ scale: 0.95 }}

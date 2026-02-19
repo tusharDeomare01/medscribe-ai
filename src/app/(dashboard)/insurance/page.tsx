@@ -80,7 +80,7 @@ export default function InsurancePage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Left: Form */}
         <div className="space-y-4">
-          <Card className="p-6 border-border/50 space-y-4">
+          <Card data-tour-id="insurance-form" className="p-6 border-border/50 space-y-4">
             <h3 className="font-semibold text-base">Patient Insurance Details</h3>
             <div className="space-y-3">
               <div><Label htmlFor="patientName">Patient Name</Label><Input id="patientName" placeholder="John Doe" value={form.patientName} onChange={(e) => setForm({ ...form, patientName: e.target.value })} /></div>
@@ -111,7 +111,7 @@ export default function InsurancePage() {
         </div>
 
         {/* Right: Results */}
-        <ScrollArea className="max-h-[calc(100vh-250px)]">
+        <ScrollArea data-tour-id="insurance-results" className="max-h-[calc(100vh-250px)]">
           {!result && !loading && (
             <Card className="border-border/50 min-h-[400px] flex items-center justify-center">
               <div className="text-center space-y-3">

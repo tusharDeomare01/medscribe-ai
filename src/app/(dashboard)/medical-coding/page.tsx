@@ -114,7 +114,7 @@ export default function MedicalCodingPage() {
         <TabsContent value="codes" className="mt-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="space-y-4">
-              <Card className="p-6 border-border/50 space-y-4">
+              <Card data-tour-id="coding-input" className="p-6 border-border/50 space-y-4">
                 <h3 className="font-semibold">Clinical Note</h3>
                 <Textarea placeholder="Paste clinical note text here..." value={noteText} onChange={(e) => setNoteText(e.target.value)} rows={10} className="resize-none" />
                 <Button className="w-full bg-violet-600 hover:bg-violet-700 gap-2" onClick={handleGenerateCodes} disabled={loadingCodes || !noteText.trim()}>
@@ -127,7 +127,7 @@ export default function MedicalCodingPage() {
               </Card>
             </div>
 
-            <ScrollArea className="max-h-[calc(100vh-300px)]">
+            <ScrollArea data-tour-id="coding-results" className="max-h-[calc(100vh-300px)]">
               {!codingResult && !loadingCodes && (
                 <Card className="border-border/50 min-h-[400px] flex items-center justify-center">
                   <div className="text-center space-y-3">

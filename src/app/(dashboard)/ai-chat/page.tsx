@@ -159,7 +159,7 @@ export default function AIChatPage() {
       </div>
 
       {/* Chat Area */}
-      <Card className="flex-1 flex flex-col border-border/50 overflow-hidden">
+      <Card data-tour-id="chat-messages" className="flex-1 flex flex-col border-border/50 overflow-hidden">
         <ScrollArea ref={scrollRef} className="flex-1 p-6">
           {messages.length === 0 && !isStreaming ? (
             <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center">
@@ -172,7 +172,7 @@ export default function AIChatPage() {
                 differential diagnoses, and more.
               </p>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg w-full">
+              <div data-tour-id="chat-suggestions" className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg w-full">
                 {SUGGESTIONS.map((suggestion) => (
                   <button
                     key={suggestion}

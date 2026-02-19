@@ -207,7 +207,7 @@ export default function CarePlansPage() {
     <div ref={containerRef} className="space-y-6">
       {/* Header */}
       <AnimatedContent distance={30} duration={0.6}>
-        <div className="flex items-center justify-between">
+        <div data-tour-id="care-plans-header" className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <ClipboardList className="w-6 h-6 text-primary" />
@@ -322,7 +322,7 @@ export default function CarePlansPage() {
           </Button>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div data-tour-id="care-plans-grid" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredPlans.map((plan, i) => {
             const progress = getProgress(plan.goals as Array<{ status: string }>);
             return (

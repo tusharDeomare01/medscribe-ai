@@ -104,7 +104,7 @@ export default function ShiftSchedulingPage() {
             </h1>
             <p className="text-muted-foreground mt-1 text-sm">AI-optimized staff scheduling with skill mix and coverage analysis</p>
           </div>
-          <Button size="sm" onClick={handleOptimize} disabled={optimizing} className="gap-1 bg-amber-600 hover:bg-amber-700">
+          <Button data-tour-id="shift-optimize" size="sm" onClick={handleOptimize} disabled={optimizing} className="gap-1 bg-amber-600 hover:bg-amber-700">
             {optimizing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
             Optimize with AI
           </Button>
@@ -119,7 +119,7 @@ export default function ShiftSchedulingPage() {
       </div>
 
       {/* Weekly Grid */}
-      <Card className="border-border/50 overflow-x-auto">
+      <Card data-tour-id="shift-grid" className="border-border/50 overflow-x-auto">
         <div className="min-w-[700px]">
           <div className="grid grid-cols-8 border-b border-border/50">
             <div className="p-3 text-xs font-medium text-muted-foreground">Shift</div>

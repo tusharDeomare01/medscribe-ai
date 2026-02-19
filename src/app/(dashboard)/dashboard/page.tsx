@@ -124,7 +124,7 @@ export default function DashboardPage() {
       </AnimatedContent>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div data-tour-id="dashboard-kpis" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {kpiCards.map((kpi, i) => (
           <AnimatedContent key={kpi.title} distance={40} delay={i * 0.1} duration={0.6}>
             <SpotlightCard
@@ -160,7 +160,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Charts Row */}
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div data-tour-id="dashboard-charts" className="grid lg:grid-cols-2 gap-6">
         <AnimatedContent distance={40} delay={0.2}>
           <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
             <CardHeader>

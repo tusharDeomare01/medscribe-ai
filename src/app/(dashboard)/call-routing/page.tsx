@@ -152,7 +152,7 @@ export default function CallRoutingPage() {
         </div>
       </AnimatedContent>
 
-      <Card className="flex-1 flex flex-col border-border/50 overflow-hidden">
+      <Card data-tour-id="call-chat" className="flex-1 flex flex-col border-border/50 overflow-hidden">
         <ScrollArea ref={scrollRef} className="flex-1 p-6">
           {showEmptyState ? (
             <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center">
@@ -161,7 +161,7 @@ export default function CallRoutingPage() {
               </div>
               <h3 className="text-lg font-semibold mb-2">How can we help you today?</h3>
               <p className="text-sm text-muted-foreground mb-8 max-w-md">Select the reason for your call and our AI will route you to the right department.</p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-w-lg w-full">
+              <div data-tour-id="call-categories" className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-w-lg w-full">
                 {CALL_CATEGORIES.map((cat, i) => (
                   <AnimatedContent key={cat.label} distance={20} duration={0.4} delay={i * 0.05}>
                     <SpotlightCard spotlightColor={cat.color} className="cursor-pointer hover:scale-[1.02] transition-transform">

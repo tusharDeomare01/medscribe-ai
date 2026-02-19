@@ -135,6 +135,7 @@ export function AppSidebar() {
   );
 
   return (
+    <div data-tour-id="sidebar">
     <Sidebar open={open} setOpen={setOpen}>
       <SidebarBody className="justify-between gap-10 border-r border-border/50 bg-background dark:bg-neutral-900">
         {/* Top section */}
@@ -227,5 +228,6 @@ export function AppSidebar() {
         </div>
       </SidebarBody>
     </Sidebar>
+    </div>
   );
 }

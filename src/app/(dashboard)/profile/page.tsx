@@ -433,7 +433,7 @@ export default function ProfilePage() {
       `}</style>
 
       {/* ══════════════ Header Banner ══════════════ */}
-      <div className="relative">
+      <div data-tour-id="profile-info" className="relative">
         <SpotlightCard
           className="border-border/50 bg-card/80 backdrop-blur-sm overflow-hidden"
           spotlightColor="rgba(99, 102, 241, 0.12)"
@@ -666,7 +666,7 @@ export default function ProfilePage() {
         </div>
 
         {/* ── Security & Account ── */}
-        <div className="space-y-4">
+        <div data-tour-id="profile-settings" className="space-y-4">
           <SpotlightCard
             className="profile-card border-border/50 bg-card/80 backdrop-blur-sm"
             spotlightColor="rgba(239, 68, 68, 0.08)"

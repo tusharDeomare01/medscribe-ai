@@ -316,7 +316,7 @@ export default function EducationPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left: Content Feed */}
-        <div className="lg:col-span-2 space-y-4">
+        <div data-tour-id="education-content" className="lg:col-span-2 space-y-4">
           <div className="relative max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -410,7 +410,7 @@ export default function EducationPage() {
         </div>
 
         {/* Right: Gamification Panel */}
-        <div className="space-y-4">
+        <div data-tour-id="education-achievements" className="space-y-4">
           <AnimatedContent distance={30} duration={0.5} delay={0.2}>
             <SpotlightCard spotlightColor="rgba(245, 158, 11, 0.12)">
               <CardHeader className="pb-3">

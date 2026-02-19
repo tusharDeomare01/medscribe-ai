@@ -114,7 +114,7 @@ export default function PatientMonitoringPage() {
       </AnimatedContent>
 
       {/* Vital KPIs */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div data-tour-id="monitoring-vitals" className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {current && [
           { label: "Heart Rate", value: current.heartRate, unit: "bpm", key: "heartRate" as keyof VitalPoint, icon: Heart, color: "rgba(239, 68, 68, 0.15)" },
           { label: "Blood Pressure", value: current.systolic, unit: `/${current.diastolic}`, key: "systolic" as keyof VitalPoint, icon: Activity, color: "rgba(56, 189, 248, 0.15)" },
@@ -139,7 +139,7 @@ export default function PatientMonitoringPage() {
       </div>
 
       {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div data-tour-id="monitoring-charts" className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card className="p-4 border-border/50">
           <h4 className="text-sm font-medium mb-3">Heart Rate</h4>
           <ResponsiveContainer width="100%" height={180}>

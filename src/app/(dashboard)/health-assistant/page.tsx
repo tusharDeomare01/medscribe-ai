@@ -258,7 +258,7 @@ export default function HealthAssistantPage() {
       </AnimatedContent>
 
       {/* Chat Area */}
-      <Card className="flex-1 flex flex-col border-border/50 overflow-hidden">
+      <Card data-tour-id="health-chat" className="flex-1 flex flex-col border-border/50 overflow-hidden">
         <ScrollArea ref={scrollRef} className="flex-1 p-6">
           {showEmptyState ? (
             <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center">
@@ -272,7 +272,7 @@ export default function HealthAssistantPage() {
               </p>
 
               {/* Symptom Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 max-w-2xl w-full">
+              <div data-tour-id="health-symptoms" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 max-w-2xl w-full">
                 {SYMPTOM_CHIPS.map((chip, i) => (
                   <AnimatedContent key={chip.label} distance={20} duration={0.4} delay={i * 0.05}>
                     <SpotlightCard
