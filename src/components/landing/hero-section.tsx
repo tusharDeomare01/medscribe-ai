@@ -8,10 +8,11 @@ import { DrawSVGPlugin } from "gsap/DrawSVGPlugin";
 import { SplitText } from "gsap/SplitText";
 import { ScrambleTextPlugin } from "gsap/ScrambleTextPlugin";
 import { Physics2DPlugin } from "gsap/Physics2DPlugin";
-import { Zap, Play, Check, Sparkles } from "lucide-react";
+import { Zap, Play, Check, Sparkles, Presentation } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import StarBorder from "@/components/StarBorder";
 import { HeroSvgNetwork } from "./hero-svg-network";
+import { usePitch } from "@/components/pitch/pitch-provider";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger, DrawSVGPlugin, SplitText, ScrambleTextPlugin, Physics2DPlugin);
@@ -22,6 +23,7 @@ export function HeroSection() {
   const titleRef = useRef<HTMLHeadingElement>(null);
   const subtitleRef = useRef<HTMLParagraphElement>(null);
   const particleContainerRef = useRef<HTMLDivElement>(null);
+  const { startPitch } = usePitch();
 
   useEffect(() => {
     if (!sectionRef.current || typeof window === "undefined") return;
@@ -241,6 +243,16 @@ export function HeroSection() {
                 <Zap className="w-4 h-4" /> Start Free Demo
               </Button>
             </Link>
+            <div className="hero-cta-btn">
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={startPitch}
+                className="text-base px-8 h-13 gap-2 w-full sm:w-auto border-primary/40 bg-primary/5 hover:bg-primary/10 hover:border-primary/60 transition-all duration-300"
+              >
+                <Presentation className="w-4 h-4" /> Pitch This App
+              </Button>
+            </div>
             <a href="#demo" className="hero-cta-btn">
               <Button
                 variant="outline"
