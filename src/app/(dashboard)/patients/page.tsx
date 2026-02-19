@@ -138,7 +138,7 @@ export default function PatientsPage() {
     <div className="space-y-6">
       {/* Header */}
       <AnimatedContent distance={30} duration={0.6}>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div data-tour-id="patients-header" className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <Users className="w-6 h-6 text-primary" /> Patients
@@ -284,7 +284,7 @@ export default function PatientsPage() {
           </div>
         </AnimatedContent>
       ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div data-tour-id="patients-grid" className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((patient, i) => (
             <AnimatedContent key={patient._id} distance={40} delay={i * 0.08} duration={0.5}>
               <SpotlightCard

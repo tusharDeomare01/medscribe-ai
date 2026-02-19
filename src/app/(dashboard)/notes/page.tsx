@@ -475,6 +475,7 @@ export default function ClinicalNotesPage() {
           {/* ── Voice Dictation Panel ── */}
           <AnimatedContent distance={40} delay={0.1} duration={0.6}>
             <SpotlightCard
+              data-tour-id="notes-voice"
               className="border-border/50 bg-card/80 backdrop-blur-sm"
               spotlightColor={
                 isListening
@@ -778,7 +779,7 @@ export default function ClinicalNotesPage() {
         </div>
 
         {/* ═══════════════════ Right Column: Output ═══════════════════ */}
-        <div className="space-y-4">
+        <div data-tour-id="notes-results" className="space-y-4">
           {processing ? (
             <AnimatedContent distance={30} duration={0.5}>
               <SpotlightCard

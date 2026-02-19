@@ -121,7 +121,7 @@ export default function NursingAssistantPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Left: Voice Input */}
-        <div className="space-y-4">
+        <div data-tour-id="nursing-voice" className="space-y-4">
           <Card className="p-6 border-border/50 space-y-4">
             <h3 className="font-semibold">Voice Input</h3>
             <div className="flex flex-col items-center gap-4">
@@ -159,7 +159,7 @@ export default function NursingAssistantPage() {
         </div>
 
         {/* Right: Results & Task Feed */}
-        <ScrollArea className="max-h-[calc(100vh-300px)]">
+        <ScrollArea data-tour-id="nursing-results" className="max-h-[calc(100vh-300px)]">
           <div className="space-y-4">
             {result && (
               <AnimatedContent distance={20} duration={0.4}>

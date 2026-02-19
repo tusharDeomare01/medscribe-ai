@@ -122,7 +122,7 @@ export default function SchedulingPage() {
         </div>
       </AnimatedContent>
 
-      <Tabs defaultValue="scheduler" className="w-full">
+      <Tabs data-tour-id="scheduling-tabs" defaultValue="scheduler" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="scheduler">AI Scheduler</TabsTrigger>
           <TabsTrigger value="noshow">No-Show Predictions</TabsTrigger>
@@ -140,7 +140,7 @@ export default function SchedulingPage() {
                   </div>
                   <h3 className="text-lg font-semibold mb-2">AI Scheduling Assistant</h3>
                   <p className="text-sm text-muted-foreground mb-8 max-w-md">Book, reschedule, or manage appointments using natural language.</p>
-                  <div className="grid grid-cols-2 gap-3 max-w-md w-full">
+                  <div data-tour-id="scheduling-actions" className="grid grid-cols-2 gap-3 max-w-md w-full">
                     {QUICK_ACTIONS.map((action, i) => (
                       <AnimatedContent key={action.label} distance={20} duration={0.4} delay={i * 0.05}>
                         <SpotlightCard spotlightColor={action.color} className="cursor-pointer hover:scale-[1.02] transition-transform">

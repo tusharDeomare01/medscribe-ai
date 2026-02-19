@@ -131,7 +131,7 @@ export default function ReportsPage() {
 
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Input */}
-        <div className="space-y-4">
+        <div data-tour-id="reports-upload" className="space-y-4">
           <AnimatedContent distance={40} delay={0.1} duration={0.6}>
             <SpotlightCard
               className="border-border/50 bg-card/80 backdrop-blur-sm"
@@ -201,7 +201,7 @@ export default function ReportsPage() {
         </div>
 
         {/* Results */}
-        <div className="space-y-4">
+        <div data-tour-id="reports-results" className="space-y-4">
           {processing ? (
             <AnimatedContent distance={30} duration={0.5}>
               <SpotlightCard

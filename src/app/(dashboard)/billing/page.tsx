@@ -133,7 +133,7 @@ export default function BillingPage() {
 
         {/* Tab 1: Revenue Dashboard */}
         <TabsContent value="dashboard" className="mt-4 space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div data-tour-id="billing-kpis" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
               { label: "Total Revenue", value: stats.totalRevenue, prefix: "$", color: "rgba(34, 197, 94, 0.15)", icon: DollarSign },
               { label: "Outstanding Claims", value: stats.outstanding, color: "rgba(245, 158, 11, 0.15)", icon: Clock },
@@ -162,7 +162,7 @@ export default function BillingPage() {
             ))}
           </div>
 
-          <Card className="border-border/50">
+          <Card data-tour-id="billing-claims" className="border-border/50">
             <div className="p-4 border-b border-border/50">
               <h3 className="font-semibold">Recent Claims</h3>
             </div>

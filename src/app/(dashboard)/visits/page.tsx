@@ -145,7 +145,7 @@ export default function VisitsPage() {
     <div ref={containerRef} className="space-y-6">
       {/* Header */}
       <AnimatedContent distance={30} duration={0.6}>
-        <div className="flex items-center justify-between">
+        <div data-tour-id="visits-header" className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <Video className="w-6 h-6 text-primary" />
@@ -242,7 +242,7 @@ export default function VisitsPage() {
           </Button>
         </Card>
       ) : (
-        <div className="relative">
+        <div data-tour-id="visits-list" className="relative">
           {/* Timeline line */}
           <div className="absolute left-6 top-0 bottom-0 w-px bg-border/50 hidden md:block" />
 

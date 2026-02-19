@@ -6,6 +6,11 @@ import { AppSidebar } from "@/components/layout/app-sidebar";
 import { FloatingChatProvider } from "@/components/providers/floating-chat-provider";
 import { FloatingChatButton } from "@/components/chat/floating-chat-button";
 import { SiteArchitectureButton } from "@/components/layout/site-architecture-button";
+import { TourProvider } from "@/components/tour/tour-provider";
+import { TourOverlay } from "@/components/tour/tour-overlay";
+import { TourTooltip } from "@/components/tour/tour-tooltip";
+import { TourProgress } from "@/components/tour/tour-progress";
+import { GuideButton } from "@/components/tour/guide-button";
 import { cn } from "@/lib/utils";
 
 export default function DashboardLayout({
@@ -30,23 +35,29 @@ export default function DashboardLayout({
 
   return (
     <FloatingChatProvider>
-      <div
-        className={cn(
-          "flex flex-col md:flex-row bg-gray-100 dark:bg-neutral-800 w-full flex-1 mx-auto overflow-hidden",
-          "h-screen"
-        )}
-      >
-        <AppSidebar />
-        <main className="flex flex-1 flex-col overflow-y-auto">
-          <div className="p-4 md:p-6 lg:p-8 rounded-tl-2xl border border-border/40 bg-background dark:bg-neutral-900 flex-1">
-            <div className="max-w-[1400px] mx-auto">
-              {children}
+      <TourProvider>
+        <div
+          className={cn(
+            "flex flex-col md:flex-row bg-gray-100 dark:bg-neutral-800 w-full flex-1 mx-auto overflow-hidden",
+            "h-screen"
+          )}
+        >
+          <AppSidebar />
+          <main className="flex flex-1 flex-col overflow-y-auto">
+            <div className="p-4 md:p-6 lg:p-8 rounded-tl-2xl border border-border/40 bg-background dark:bg-neutral-900 flex-1">
+              <div className="max-w-[1400px] mx-auto">
+                {children}
+              </div>
             </div>
-          </div>
-        </main>
-        <FloatingChatButton />
-        <SiteArchitectureButton />
-      </div>
+          </main>
+          <FloatingChatButton />
+          <SiteArchitectureButton />
+          <GuideButton />
+        </div>
+        <TourOverlay />
+        <TourTooltip />
+        <TourProgress />
+      </TourProvider>
     </FloatingChatProvider>
   );
 }

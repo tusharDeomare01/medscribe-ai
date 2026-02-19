@@ -155,7 +155,7 @@ export default function StaffTrainingPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 min-h-0">
         {/* Left: Module Feed */}
-        <div className="lg:col-span-2 min-h-0">
+        <div data-tour-id="training-modules" className="lg:col-span-2 min-h-0">
           <ScrollArea className="h-[calc(100vh-320px)]">
             <div className="space-y-4">
               {/* Streaming preview */}
@@ -250,7 +250,7 @@ export default function StaffTrainingPage() {
 
         {/* Right: Generation Form */}
         <div className="space-y-4 lg:max-h-[calc(100vh-320px)] lg:overflow-y-auto lg:scrollbar-none">
-          <Card className="p-6 border-border/50 space-y-4">
+          <Card data-tour-id="training-generate" className="p-6 border-border/50 space-y-4">
             <h3 className="font-semibold flex items-center gap-2"><Sparkles className="w-4 h-4 text-violet-500" /> Generate Training</h3>
             <div className="space-y-3">
               <div>
