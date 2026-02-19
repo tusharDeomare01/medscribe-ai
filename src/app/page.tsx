@@ -28,6 +28,10 @@ import { WorkflowSection } from "@/components/landing/workflow-section";
 import { DemoSection } from "@/components/landing/demo-section";
 import { CtaSection } from "@/components/landing/cta-section";
 import { FooterSection } from "@/components/landing/footer-section";
+import { PitchProvider } from "@/components/pitch/pitch-provider";
+import { PitchOverlay } from "@/components/pitch/pitch-overlay";
+import { PitchSlideRenderer } from "@/components/pitch/pitch-slide-renderer";
+import { PitchProgress } from "@/components/pitch/pitch-progress";
 
 // Register all GSAP plugins once (except MotionPathPlugin — lazy only)
 if (typeof window !== "undefined") {
@@ -93,7 +97,13 @@ export default function LandingPage() {
   );
 
   return (
+    <PitchProvider>
     <div className="min-h-screen overflow-x-hidden">
+      {/* ═══ PITCH DECK — Outside ScrollSmoother (fixed overlay) ═══ */}
+      <PitchOverlay />
+      <PitchSlideRenderer />
+      <PitchProgress />
+
       {/* ═══ NAVBAR — Outside ScrollSmoother (fixed) ═══ */}
       {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
       <div onClick={scrollToHash}>
@@ -181,5 +191,6 @@ export default function LandingPage() {
         </div>
       </div>
     </div>
+    </PitchProvider>
   );
 }
